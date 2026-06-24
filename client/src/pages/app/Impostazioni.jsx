@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { meApi, statiApi } from '../../services/api';
+import { meApi, statiApi, authApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 const BREVO_KEY_SET = !!import.meta.env.VITE_BREVO_CONFIGURED;
@@ -20,6 +20,8 @@ export default function Impostazioni() {
   const [emailMsg, setEmailMsg] = useState(null);
   const [testing, setTesting] = useState(false);
   const [testingBrevo, setTestingBrevo] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendMsg, setResendMsg] = useState(null);
 
   // Stati
   const [stati, setStati] = useState([]);
@@ -114,9 +116,35 @@ export default function Impostazioni() {
       <h5 className="fw-bold mb-4"><i className="bi bi-gear me-2" />Impostazioni</h5>
 
       {!user?.email_verified && (
-        <div className="alert alert-warning mb-3">
-          <i className="bi bi-exclamation-triangle me-2" />
-          Email non verificata. Controlla la tua casella di posta.
+        <div className="alert alert-warning mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <span>
+            <i className="bi bi-exclamation-triangle me-2" />
+            Email non verificata. Controlla la tua casella di posta.
+            {resendMsg && (
+              <span className={`ms-2 small fw-semibold text-${resendMsg.type === 'success' ? 'success' : 'danger'}`}>
+                {resendMsg.text}
+              </span>
+            )}
+          </span>
+          <button
+            className="btn btn-sm btn-warning"
+            disabled={resending}
+            onClick={async () => {
+              setResending(true); setResendMsg(null);
+              try {
+                await authApi.resendVerification();
+                setResendMsg({ type: 'success', text: 'Email inviata!' });
+              } catch (err) {
+                setResendMsg({ type: 'danger', text: err.response?.data?.error || 'Errore invio' });
+              } finally {
+                setResending(false);
+              }
+            }}
+          >
+            {resending
+              ? <><span className="spinner-border spinner-border-sm me-1" />Invio...</>
+              : <><i className="bi bi-envelope-arrow-up me-1" />Reinvia verifica</>}
+          </button>
         </div>
       )}
 

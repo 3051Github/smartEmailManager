@@ -56,7 +56,9 @@ router.post('/register', [
       [utenteId, token, expires]
     );
 
-    await sendVerificationEmail(email, nome, token).catch(() => {});
+    await sendVerificationEmail(email, nome, token).catch(err => {
+      logger.error(`[register] sendVerificationEmail failed: ${err.message}`);
+    });
 
     res.status(201).json({ success: true, message: 'Registrazione completata. Controlla la tua email.' });
   } catch (err) { next(err); }
@@ -146,7 +148,9 @@ router.post('/forgot-password', [
       [utente.id, token, expires]
     );
 
-    await sendPasswordResetEmail(email, utente.nome, token).catch(() => {});
+    await sendPasswordResetEmail(email, utente.nome, token).catch(err => {
+      logger.error(`[forgot-password] sendPasswordResetEmail failed: ${err.message}`);
+    });
     res.json({ success: true, message: 'Se l\'email esiste, riceverai le istruzioni.' });
   } catch (err) { next(err); }
 });
@@ -221,7 +225,9 @@ router.post('/resend-verification', requireAuth, async (req, res, next) => {
       'INSERT INTO email_verification_tokens (utente_id, token, expires_at) VALUES (?, ?, ?)',
       [req.user.id, token, expires]
     );
-    await sendVerificationEmail(req.user.email, req.user.nome, token).catch(() => {});
+    await sendVerificationEmail(req.user.email, req.user.nome, token).catch(err => {
+      logger.error(`[resend-verification] sendVerificationEmail failed: ${err.message}`);
+    });
     res.json({ success: true, message: 'Email di verifica inviata' });
   } catch (err) { next(err); }
 });
